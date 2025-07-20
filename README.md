@@ -57,7 +57,36 @@ To use a LoRA transformer, simply replace the model from `candle-transformers` w
 ## Saving and loading
 `candle_lora` supports retrieving weights for LoRA adapters via the `get_tensors` method, defined automatically in `#[auto_layer_convert]`. This function is meant to be used with `candle_core::safetensors::save()`. To load, simply load the `VarBuilder` and pass that to `get_lora_model`.
 
-`candle_lora`'s weight naming is not compatible with `peft` yet.
+### PEFT Compatibility
+`candle_lora` now supports converting between HuggingFace PEFT format and candle-lora format! 🎉
+
+To convert PEFT LoRA weights to candle-lora format:
+```rust
+use candle_lora::convert_peft_to_candle_lora;
+use candle_core::Device;
+
+let device = Device::Cpu;
+convert_peft_to_candle_lora(
+    "path/to/adapter_model.safetensors",
+    "path/to/converted.safetensors",
+    "lora_llama",  // prefix for the model type
+    &device
+)?;
+```
+
+Or convert an entire PEFT directory:
+```rust
+use candle_lora::convert_peft_dir_to_candle_lora;
+
+convert_peft_dir_to_candle_lora(
+    "path/to/peft_model_dir",  // contains adapter_config.json and adapter_model.safetensors
+    "path/to/converted.safetensors",
+    "lora_llama",
+    &device
+)?;
+```
+
+This allows you to use LoRA adapters trained with HuggingFace PEFT directly in candle-lora!
 
 ## Resources
 `candle-lora`'s LoRA conversion implementations are based on HuggingFace's [`peft`](https://github.com/huggingface/peft/tree/main) library. See the original paper [here](https://arxiv.org/pdf/2106.09685.pdf), as well as Microsoft's [implementation](https://github.com/microsoft/LoRA).
