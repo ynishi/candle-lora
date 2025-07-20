@@ -1,10 +1,7 @@
 //! The LLama2 model.
 
 use candle_core::{DType, Device, IndexOp, Result, Tensor, D};
-use candle_lora::{
-    EmbeddingLayerLike, LinearLayerLike, LoraConfig, LoraEmbeddingConfig, LoraLinearConfig,
-    Saveable,
-};
+use candle_lora::{LinearLayerLike, LoraConfig, LoraEmbeddingConfig, LoraLinearConfig, Saveable};
 use candle_lora_macro::{replace_layer_fields, AutoLoraConvert};
 use candle_nn::{Embedding, Module, VarBuilder};
 use serde::Deserialize;
@@ -460,7 +457,7 @@ impl Block {
         merge: bool,
         lora_config: LoraConfig,
         linear_config: LoraLinearConfig,
-        embed_onfig: LoraEmbeddingConfig,
+        embed_config: Option<LoraEmbeddingConfig>,
     ) -> Result<Self> {
         let span = tracing::span!(tracing::Level::TRACE, "block");
         let attn = CausalSelfAttention::load(
@@ -494,7 +491,7 @@ impl Block {
                 Some(linear_config),
                 None,
                 None,
-                Some(embed_onfig),
+                embed_config,
             )
         } else {
             this.get_lora_model(
@@ -503,7 +500,7 @@ impl Block {
                 Some(linear_config),
                 None,
                 None,
-                Some(embed_onfig),
+                embed_config,
             )
         }
 
@@ -514,7 +511,7 @@ impl Block {
 #[replace_layer_fields]
 #[derive(AutoLoraConvert)]
 pub struct Llama {
-    wte: Embedding,
+    wte: Arc<Embedding>,
     blocks: Vec<Block>,
     ln_f: RmsNorm,
     lm_head: Box<dyn LinearLayerLike>,
@@ -543,7 +540,7 @@ impl Llama {
         merge: bool,
         lora_config: LoraConfig,
         linear_config: LoraLinearConfig,
-        embed_config: LoraEmbeddingConfig,
+        embed_config: Option<LoraEmbeddingConfig>,
     ) -> Result<Self> {
         let wte = embedding(cfg, vb.pp("model.embed_tokens"))?;
         let lm_head = linear(cfg.hidden_size, cfg.vocab_size, vb.pp("lm_head"))?;
@@ -577,7 +574,7 @@ impl Llama {
                 Some(linear_config),
                 None,
                 None,
-                Some(embed_config),
+                embed_config,
             )
         } else {
             this.get_lora_model(
@@ -586,7 +583,7 @@ impl Llama {
                 Some(linear_config),
                 None,
                 None,
-                Some(embed_config),
+                embed_config,
             )
         }
 

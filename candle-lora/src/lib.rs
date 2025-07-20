@@ -22,7 +22,7 @@ pub struct Lora;
 
 impl Lora {
     /// Convert the selected layers into their LoRA counterparts.
-    pub fn convert_model<T: Eq + PartialEq + Hash>(
+    pub fn convert_model<T: Eq + PartialEq + Hash + std::fmt::Display>(
         selected: SelectedLayers<'_, T>,
         config: LoraConfig,
         vb: &VarBuilder,
@@ -82,18 +82,26 @@ impl Lora {
         }
 
         for (name, layer) in selected.embed {
-            new.embed.insert(
-                name,
-                LoraEmbedding::new(
-                    layer,
-                    selected.embed_config.as_ref().unwrap(),
-                    &config,
-                    vb,
-                    id,
-                )
-                .unwrap(),
-            );
-            id += 1;
+            if let Some(embed_config) = selected.embed_config.as_ref() {
+                match LoraEmbedding::new(layer, embed_config, &config, vb, id) {
+                    Ok(lora_embed) => {
+                        new.embed.insert(name, lora_embed);
+                        id += 1;
+                    }
+                    Err(e) => {
+                        // Skip this embedding layer if LoRA weights are not found
+                        eprintln!(
+                            "Warning: Skipping LoRA for embedding layer '{}': {}",
+                            name, e
+                        );
+                    }
+                }
+            } else {
+                eprintln!(
+                    "Warning: No embed_config provided for embedding layer '{}'",
+                    name
+                );
+            }
         }
 
         new
