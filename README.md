@@ -60,6 +60,7 @@ To use a LoRA transformer, simply replace the model from `candle-transformers` w
 ### PEFT Compatibility
 `candle_lora` now supports converting between HuggingFace PEFT format and candle-lora format! 🎉
 
+#### Basic Conversion
 To convert PEFT LoRA weights to candle-lora format:
 ```rust
 use candle_lora::convert_peft_to_candle_lora;
@@ -85,6 +86,37 @@ convert_peft_dir_to_candle_lora(
     &device
 )?;
 ```
+
+#### Advanced Conversion with Layer Type Awareness
+For more sophisticated conversions that automatically handle different layer types (available for Llama models):
+
+```rust
+use candle_lora::{convert_peft_to_candle_lora_typed, convert_peft_dir_to_candle_lora_typed};
+use candle_core::Device;
+
+let device = Device::Cpu;
+
+// Convert with automatic layer type detection and dummy embeddings
+convert_peft_to_candle_lora_typed(
+    "path/to/adapter_model.safetensors",
+    "path/to/converted.safetensors",
+    &device,
+    true  // add_dummy_embeddings
+)?;
+
+// Or convert a directory
+convert_peft_dir_to_candle_lora_typed(
+    "path/to/peft_model_dir",
+    "path/to/converted.safetensors",
+    &device,
+    true  // add_dummy_embeddings
+)?;
+```
+
+The typed conversion functions automatically:
+- Detect and categorize layers by type (embedding/lm_head, attention, MLP)
+- Assign appropriate prefixes (`lora_llama`, `lora_llama_csa`, `lora_llama_block`)
+- Add dummy embedding tensors if not present (required by candle-lora)
 
 This allows you to use LoRA adapters trained with HuggingFace PEFT directly in candle-lora!
 

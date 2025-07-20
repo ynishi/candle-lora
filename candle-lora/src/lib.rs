@@ -7,7 +7,10 @@ pub use loraconv1d::{LoraConv1d, LoraConv1dConfig};
 pub use loraconv2d::{LoraConv2d, LoraConv2dConfig};
 pub use loraembed::{LoraEmbedding, LoraEmbeddingConfig};
 pub use loralinear::{LoraLinear, LoraLinearConfig};
-pub use peft_convert::{convert_peft_dir_to_candle_lora, convert_peft_to_candle_lora, PeftConfig};
+pub use peft_convert::{
+    convert_peft_dir_to_candle_lora, convert_peft_dir_to_candle_lora_typed,
+    convert_peft_to_candle_lora, convert_peft_to_candle_lora_typed, CandleLoraPrefix, PeftConfig,
+};
 use std::{collections::HashMap, fmt::Debug, hash::Hash};
 use thiserror::Error;
 
